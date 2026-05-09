@@ -17,6 +17,7 @@ public static class DependencyInjection
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
         services.Configure<MongoDbOptions>(configuration.GetSection(MongoDbOptions.SectionName));
+        services.Configure<BlobCacheOptions>(configuration.GetSection(BlobCacheOptions.SectionName));
         services.AddSingleton<IMongoClient>(serviceProvider =>
         {
             var options = serviceProvider.GetRequiredService<IOptions<MongoDbOptions>>().Value;
@@ -30,6 +31,7 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IAuthorRepository, AuthorRepository>();
+        services.AddSingleton<IProductAuthorLinkRepository, BlobProductAuthorLinkRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
 
         return services;

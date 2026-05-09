@@ -43,3 +43,5 @@ services:
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=ProductStoreDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True
       - MongoDb__ConnectionString=mongodb://mongodb:27017
       - MongoDb__DatabaseName=CatalogCloudAuthorsDb
+      - BlobCache__ContainerPath=/app/blob-cache
+      - BlobCache__ProductAuthorLinksBlobName=product-author-links.json
