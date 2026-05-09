@@ -1,0 +1,16 @@
+@Bookstore.API_HostAddress = http://localhost:5292
+
+GET {{Bookstore.API_HostAddress}}/api/products?page=1&pageSize=10
+Accept: application/json
+
+###
+
+POST {{Bookstore.API_HostAddress}}/api/products
+Content-Type: application/json
+
+{
+  "name": "Wireless Mouse",
+  "description": "Ergonomic office mouse",
+  "price": 29.99,
+  "quantityInStock": 25
+}
