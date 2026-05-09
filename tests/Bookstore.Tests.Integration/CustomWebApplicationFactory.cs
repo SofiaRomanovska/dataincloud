@@ -13,6 +13,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 {
     private readonly MsSqlContainer _dbContainer;
     private readonly MongoDbContainer _mongoContainer;
+    private readonly string _blobContainerPath;
 
     public CustomWebApplicationFactory()
     {
@@ -20,6 +21,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             .Build();
         _mongoContainer = new MongoDbBuilder()
             .Build();
+        _blobContainerPath = Path.Combine(Path.GetTempPath(), $"bookstore-blob-tests-{Guid.NewGuid():N}");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -30,7 +32,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             {
                 ["MongoDb:ConnectionString"] = _mongoContainer.GetConnectionString(),
                 ["MongoDb:DatabaseName"] = $"BookstoreAuthorsTests_{Guid.NewGuid():N}",
-                ["MongoDb:AuthorsCollectionName"] = "authors"
+                ["MongoDb:AuthorsCollectionName"] = "authors",
+                ["BlobCache:ContainerPath"] = _blobContainerPath,
+                ["BlobCache:ProductAuthorLinksBlobName"] = "product-author-links.json"
             });
         });
 
@@ -61,5 +65,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     {
         await _dbContainer.DisposeAsync();
         await _mongoContainer.DisposeAsync();
+
+        if (Directory.Exists(_blobContainerPath))
+        {
+            Directory.Delete(_blobContainerPath, recursive: true);
+        }
     }
 }
