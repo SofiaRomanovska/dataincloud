@@ -23,7 +23,7 @@ public class ProductServiceTests
     {
         // Arrange
         var productId = Guid.NewGuid();
-        var product = new Product { Id = productId, Name = "Test Product" };
+        var product = new Product("Test Product", "Description", 10, 5);
         _productRepositoryMock.Setup(x => x.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(product);
 
@@ -32,7 +32,7 @@ public class ProductServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result!.Id.Should().Be(productId);
+        result!.Id.Should().Be(product.Id);
         result.Name.Should().Be("Test Product");
     }
 
@@ -98,7 +98,7 @@ public class ProductServiceTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        var dto = new UpdateProductDto { Name = "Updated" };
+        var dto = new UpdateProductDto { Name = "Updated", Description = "Description", Price = 10, QuantityInStock = 1 };
         _productRepositoryMock.Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Product?)null);
 
@@ -113,7 +113,7 @@ public class ProductServiceTests
     [Fact]
     public async Task UpdateAsync_ShouldThrowArgumentException_WhenIdIsEmpty()
     {
-        var dto = new UpdateProductDto { Name = "Updated" };
+        var dto = new UpdateProductDto { Name = "Updated", Description = "Description", Price = 10, QuantityInStock = 1 };
 
         Func<Task> act = async () => await _sut.UpdateAsync(Guid.Empty, dto);
 
@@ -126,7 +126,7 @@ public class ProductServiceTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        var product = new Product { Id = id, Name = "Old Name" };
+        var product = new Product("Old Name", "Description", 10, 5);
         var dto = new UpdateProductDto { Name = "New Name", Description = "Description", Price = 20, QuantityInStock = 12 };
         
         _productRepositoryMock.Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
@@ -155,7 +155,7 @@ public class ProductServiceTests
 
         // Assert
         result.Should().BeFalse();
-        _productRepositoryMock.Verify(x => x.DeleteAsync(It.IsAny<Product>(), It.IsAny<CancellationToken>()), Times.Never);
+        _productRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Product>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -172,7 +172,7 @@ public class ProductServiceTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        var product = new Product { Id = id };
+        var product = new Product("Product", "Description", 10, 5);
         
         _productRepositoryMock.Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(product);
@@ -182,6 +182,7 @@ public class ProductServiceTests
 
         // Assert
         result.Should().BeTrue();
-        _productRepositoryMock.Verify(x => x.DeleteAsync(product, It.IsAny<CancellationToken>()), Times.Once);
+        product.IsDeleted.Should().BeTrue();
+        _productRepositoryMock.Verify(x => x.UpdateAsync(product, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

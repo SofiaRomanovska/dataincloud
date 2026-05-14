@@ -45,16 +45,7 @@ public class ProductService : IProductService
 
     public async Task<ProductDto> CreateAsync(CreateProductDto dto, CancellationToken cancellationToken = default)
     {
-        var product = new Product
-        {
-            Id = Guid.NewGuid(),
-            Name = dto.Name,
-            Description = dto.Description,
-            Price = dto.Price,
-            QuantityInStock = dto.QuantityInStock,
-            CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
-        };
+        var product = new Product(dto.Name, dto.Description, dto.Price, dto.QuantityInStock);
 
         await _repository.AddAsync(product, cancellationToken);
 
@@ -71,10 +62,7 @@ public class ProductService : IProductService
         var product = await _repository.GetByIdAsync(id, cancellationToken);
         if (product == null) return false;
 
-        product.Name = dto.Name;
-        product.Description = dto.Description;
-        product.Price = dto.Price;
-        product.QuantityInStock = dto.QuantityInStock;
+        product.UpdateDetails(dto.Name, dto.Description, dto.Price, dto.QuantityInStock);
 
         await _repository.UpdateAsync(product, cancellationToken);
         return true;
@@ -90,7 +78,8 @@ public class ProductService : IProductService
         var product = await _repository.GetByIdAsync(id, cancellationToken);
         if (product == null) return false;
 
-        await _repository.DeleteAsync(product, cancellationToken);
+        product.Delete();
+        await _repository.UpdateAsync(product, cancellationToken);
         return true;
     }
 

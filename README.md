@@ -4,7 +4,7 @@ CRUD REST API for a product store resource built with layered architecture, DDD-
 
 ## Getting Started
 
-1. Checkout the feature branch `data_in_cloud_1`.
+1. Checkout the feature branch `feat/part_1`.
 2. Ensure you have .NET 9 installed.
 3. Use Docker Compose to spin up the database and API.
 

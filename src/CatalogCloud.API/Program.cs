@@ -1,7 +1,5 @@
 using CatalogCloud.Application;
 using CatalogCloud.Infrastructure;
-using CatalogCloud.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,11 +24,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.Migrate();
-}
+await app.Services.ApplyInfrastructureMigrationsAsync();
 
 app.Run();
 

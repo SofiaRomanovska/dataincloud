@@ -8,5 +8,4 @@ public interface IProductRepository
     Task<IEnumerable<Product>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default);
     Task AddAsync(Product product, CancellationToken cancellationToken = default);
     Task UpdateAsync(Product product, CancellationToken cancellationToken = default);
-    Task DeleteAsync(Product product, CancellationToken cancellationToken = default);
 }

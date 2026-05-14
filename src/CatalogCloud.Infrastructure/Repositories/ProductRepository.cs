@@ -39,11 +39,4 @@ public class ProductRepository : IProductRepository
         _context.Products.Update(product);
         await _context.SaveChangesAsync(cancellationToken);
     }
-
-    public async Task DeleteAsync(Product product, CancellationToken cancellationToken = default)
-    {
-        product.IsDeleted = true;
-        _context.Products.Update(product);
-        await _context.SaveChangesAsync(cancellationToken);
-    }
 }
