@@ -22,14 +22,14 @@ public class AuthorServiceTests
     public async Task GetByIdAsync_ShouldReturnAuthorDto_WhenAuthorExists()
     {
         var id = "author-id";
-        var author = new Author { Id = id, FullName = "Existing Author" };
+        var author = CreateAuthor("Existing Author");
         _authorRepositoryMock.Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(author);
 
         var result = await _sut.GetByIdAsync(id);
 
         result.Should().NotBeNull();
-        result!.Id.Should().Be(id);
+        result!.Id.Should().Be(author.Id);
         result.FullName.Should().Be("Existing Author");
     }
 
@@ -56,12 +56,13 @@ public class AuthorServiceTests
     [Fact]
     public async Task GetAllAsync_ShouldReturnMappedAuthors()
     {
+        var author = CreateAuthor("First Author");
         _authorRepositoryMock.Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[] { new Author { Id = "one", FullName = "First Author" } });
+            .ReturnsAsync(new[] { author });
 
         var result = await _sut.GetAllAsync();
 
-        result.Should().ContainSingle(x => x.Id == "one" && x.FullName == "First Author");
+        result.Should().ContainSingle(x => x.Id == author.Id && x.FullName == "First Author");
     }
 
     [Fact]
@@ -102,7 +103,7 @@ public class AuthorServiceTests
     [Fact]
     public async Task UpdateAsync_ShouldReturnTrue_WhenAuthorIsUpdated()
     {
-        var author = new Author { Id = "author-id", FullName = "Old Author", IsActive = true };
+        var author = CreateAuthor("Old Author");
         var dto = CreateValidUpdateAuthorDto("Updated Author");
         _authorRepositoryMock.Setup(x => x.GetByIdAsync(author.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(author);
@@ -139,7 +140,7 @@ public class AuthorServiceTests
     [Fact]
     public async Task DeleteAsync_ShouldReturnTrue_WhenAuthorExists()
     {
-        var author = new Author { Id = "author-id" };
+        var author = CreateAuthor("Deleted Author");
         _authorRepositoryMock.Setup(x => x.GetByIdAsync(author.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(author);
 
@@ -171,5 +172,15 @@ public class AuthorServiceTests
             PublishedBooksCount = 4,
             IsActive = false
         };
+    }
+
+    private static Author CreateAuthor(string fullName)
+    {
+        return new Author(
+            fullName,
+            "Biography with enough details.",
+            new DateTime(1975, 2, 2),
+            2,
+            true);
     }
 }

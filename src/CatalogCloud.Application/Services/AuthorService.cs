@@ -35,16 +35,12 @@ public class AuthorService : IAuthorService
 
     public async Task<AuthorDto> CreateAsync(CreateAuthorDto dto, CancellationToken cancellationToken = default)
     {
-        var author = new Author
-        {
-            Id = Guid.NewGuid().ToString("N"),
-            FullName = dto.FullName,
-            Biography = dto.Biography,
-            BirthDate = dto.BirthDate,
-            PublishedBooksCount = dto.PublishedBooksCount,
-            IsActive = dto.IsActive!.Value,
-            CreatedAt = DateTime.UtcNow
-        };
+        var author = new Author(
+            dto.FullName,
+            dto.Biography,
+            dto.BirthDate,
+            dto.PublishedBooksCount,
+            dto.IsActive!.Value);
 
         await _repository.AddAsync(author, cancellationToken);
 
@@ -61,11 +57,12 @@ public class AuthorService : IAuthorService
         var author = await _repository.GetByIdAsync(id, cancellationToken);
         if (author == null) return false;
 
-        author.FullName = dto.FullName;
-        author.Biography = dto.Biography;
-        author.BirthDate = dto.BirthDate;
-        author.PublishedBooksCount = dto.PublishedBooksCount;
-        author.IsActive = dto.IsActive!.Value;
+        author.UpdateDetails(
+            dto.FullName,
+            dto.Biography,
+            dto.BirthDate,
+            dto.PublishedBooksCount,
+            dto.IsActive!.Value);
 
         await _repository.UpdateAsync(author, cancellationToken);
         return true;
