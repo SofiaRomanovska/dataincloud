@@ -39,12 +39,7 @@ public class ProductAuthorLinkService : IProductAuthorLinkService
             return ProductAuthorLinkResult.Failure(existenceStatus);
         }
 
-        var link = new ProductAuthorLink
-        {
-            ProductId = dto.ProductId,
-            AuthorId = dto.AuthorId,
-            CachedAt = DateTime.UtcNow
-        };
+        var link = new ProductAuthorLink(dto.ProductId, dto.AuthorId);
 
         await _linkRepository.UpsertAsync(link, cancellationToken);
         return ProductAuthorLinkResult.Success(MapToDto(link));
@@ -74,8 +69,7 @@ public class ProductAuthorLinkService : IProductAuthorLinkService
             return ProductAuthorLinkResult.Failure(ProductAuthorLinkStatus.LinkNotFound);
         }
 
-        existingLink.AuthorId = dto.AuthorId;
-        existingLink.CachedAt = DateTime.UtcNow;
+        existingLink.ChangeAuthor(dto.AuthorId);
 
         await _linkRepository.UpsertAsync(existingLink, cancellationToken);
         return ProductAuthorLinkResult.Success(MapToDto(existingLink));

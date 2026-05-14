@@ -100,7 +100,7 @@ public class ProductAuthorLinkServiceTests
         var productId = Guid.NewGuid();
         var authorId = "new-author-id";
         _linkRepositoryMock.Setup(x => x.GetByProductIdAsync(productId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProductAuthorLink { ProductId = productId, AuthorId = "old-author-id" });
+            .ReturnsAsync(new ProductAuthorLink(productId, "old-author-id"));
         SetupExistingProduct(productId);
         SetupExistingAuthor(authorId);
 
@@ -116,7 +116,7 @@ public class ProductAuthorLinkServiceTests
     {
         var productId = Guid.NewGuid();
         _linkRepositoryMock.Setup(x => x.GetByProductIdAsync(productId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProductAuthorLink { ProductId = productId, AuthorId = "old-author-id" });
+            .ReturnsAsync(new ProductAuthorLink(productId, "old-author-id"));
         SetupExistingProduct(productId);
 
         var result = await _sut.UpdateAsync(productId, new UpdateProductAuthorLinkDto { AuthorId = "missing" });
@@ -139,7 +139,7 @@ public class ProductAuthorLinkServiceTests
     {
         var productId = Guid.NewGuid();
         _linkRepositoryMock.Setup(x => x.GetByProductIdAsync(productId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProductAuthorLink { ProductId = productId, AuthorId = "author-id" });
+            .ReturnsAsync(new ProductAuthorLink(productId, "author-id"));
 
         var result = await _sut.DeleteAsync(productId);
 
@@ -159,12 +159,17 @@ public class ProductAuthorLinkServiceTests
     private void SetupExistingProduct(Guid productId)
     {
         _productRepositoryMock.Setup(x => x.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Product { Id = productId, Name = "Product" });
+            .ReturnsAsync(new Product("Product", "Description", 10, 5));
     }
 
     private void SetupExistingAuthor(string authorId)
     {
         _authorRepositoryMock.Setup(x => x.GetByIdAsync(authorId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Author { Id = authorId, FullName = "Author" });
+            .ReturnsAsync(new Author(
+                "Author",
+                "Biography with enough details.",
+                new DateTime(1975, 2, 2),
+                2,
+                true));
     }
 }
