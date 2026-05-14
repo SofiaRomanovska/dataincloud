@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CatalogCloud.API/CatalogCloud.API.csproj" />
+    <Project Path="src/CatalogCloud.Application/CatalogCloud.Application.csproj" />
+    <Project Path="src/CatalogCloud.Domain/CatalogCloud.Domain.csproj" />
+    <Project Path="src/CatalogCloud.Infrastructure/CatalogCloud.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CatalogCloud.Tests.Integration/CatalogCloud.Tests.Integration.csproj" />
+    <Project Path="tests/CatalogCloud.Tests.Unit/CatalogCloud.Tests.Unit.csproj" />
+  </Folder>
+</Solution>
