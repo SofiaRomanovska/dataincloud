@@ -1,4 +1,7 @@
 using CatalogCloud.Application.DTOs;
+using CatalogCloud.Application.Enums;
+using CatalogCloud.Application.Interfaces;
+using CatalogCloud.Application.Messaging;
 using CatalogCloud.Application.Services;
 using CatalogCloud.Domain.Entities;
 using CatalogCloud.Domain.Interfaces;
@@ -12,6 +15,7 @@ public class ProductAuthorLinkServiceTests
     private readonly Mock<IProductRepository> _productRepositoryMock;
     private readonly Mock<IAuthorRepository> _authorRepositoryMock;
     private readonly Mock<IProductAuthorLinkRepository> _linkRepositoryMock;
+    private readonly Mock<IEntityChangePublisher> _entityChangePublisherMock;
     private readonly ProductAuthorLinkService _sut;
 
     public ProductAuthorLinkServiceTests()
@@ -19,10 +23,12 @@ public class ProductAuthorLinkServiceTests
         _productRepositoryMock = new Mock<IProductRepository>();
         _authorRepositoryMock = new Mock<IAuthorRepository>();
         _linkRepositoryMock = new Mock<IProductAuthorLinkRepository>();
+        _entityChangePublisherMock = new Mock<IEntityChangePublisher>();
         _sut = new ProductAuthorLinkService(
             _productRepositoryMock.Object,
             _authorRepositoryMock.Object,
-            _linkRepositoryMock.Object);
+            _linkRepositoryMock.Object,
+            _entityChangePublisherMock.Object);
     }
 
     [Fact]
@@ -40,6 +46,13 @@ public class ProductAuthorLinkServiceTests
         result.Link!.ProductId.Should().Be(productId);
         result.Link.AuthorId.Should().Be(authorId);
         _linkRepositoryMock.Verify(x => x.UpsertAsync(It.IsAny<ProductAuthorLink>(), It.IsAny<CancellationToken>()), Times.Once);
+        _entityChangePublisherMock.Verify(
+            x => x.PublishAsync(
+                It.Is<EntityChangeMessage>(message =>
+                    message.EntityType == CatalogEntityType.ProductAuthorLink
+                    && message.Operation == EntityChangeOperation.Created),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -54,6 +67,9 @@ public class ProductAuthorLinkServiceTests
         result.Status.Should().Be(ProductAuthorLinkStatus.ProductNotFound);
         _authorRepositoryMock.Verify(x => x.GetByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _linkRepositoryMock.Verify(x => x.UpsertAsync(It.IsAny<ProductAuthorLink>(), It.IsAny<CancellationToken>()), Times.Never);
+        _entityChangePublisherMock.Verify(
+            x => x.PublishAsync(It.IsAny<EntityChangeMessage>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -66,6 +82,9 @@ public class ProductAuthorLinkServiceTests
 
         result.Status.Should().Be(ProductAuthorLinkStatus.AuthorNotFound);
         _linkRepositoryMock.Verify(x => x.UpsertAsync(It.IsAny<ProductAuthorLink>(), It.IsAny<CancellationToken>()), Times.Never);
+        _entityChangePublisherMock.Verify(
+            x => x.PublishAsync(It.IsAny<EntityChangeMessage>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -92,6 +111,9 @@ public class ProductAuthorLinkServiceTests
 
         result.Status.Should().Be(ProductAuthorLinkStatus.LinkNotFound);
         _linkRepositoryMock.Verify(x => x.UpsertAsync(It.IsAny<ProductAuthorLink>(), It.IsAny<CancellationToken>()), Times.Never);
+        _entityChangePublisherMock.Verify(
+            x => x.PublishAsync(It.IsAny<EntityChangeMessage>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -109,6 +131,13 @@ public class ProductAuthorLinkServiceTests
         result.Status.Should().Be(ProductAuthorLinkStatus.Success);
         result.Link!.AuthorId.Should().Be(authorId);
         _linkRepositoryMock.Verify(x => x.UpsertAsync(It.Is<ProductAuthorLink>(l => l.AuthorId == authorId), It.IsAny<CancellationToken>()), Times.Once);
+        _entityChangePublisherMock.Verify(
+            x => x.PublishAsync(
+                It.Is<EntityChangeMessage>(message =>
+                    message.EntityType == CatalogEntityType.ProductAuthorLink
+                    && message.Operation == EntityChangeOperation.Updated),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -123,6 +152,9 @@ public class ProductAuthorLinkServiceTests
 
         result.Status.Should().Be(ProductAuthorLinkStatus.AuthorNotFound);
         _linkRepositoryMock.Verify(x => x.UpsertAsync(It.IsAny<ProductAuthorLink>(), It.IsAny<CancellationToken>()), Times.Never);
+        _entityChangePublisherMock.Verify(
+            x => x.PublishAsync(It.IsAny<EntityChangeMessage>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]

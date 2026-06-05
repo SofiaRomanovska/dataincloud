@@ -1,4 +1,7 @@
 using CatalogCloud.Application.DTOs;
+using CatalogCloud.Application.Enums;
+using CatalogCloud.Application.Interfaces;
+using CatalogCloud.Application.Messaging;
 using CatalogCloud.Application.Services;
 using CatalogCloud.Domain.Entities;
 using CatalogCloud.Domain.Interfaces;
@@ -10,12 +13,14 @@ namespace CatalogCloud.Tests.Unit;
 public class AuthorServiceTests
 {
     private readonly Mock<IAuthorRepository> _authorRepositoryMock;
+    private readonly Mock<IEntityChangePublisher> _entityChangePublisherMock;
     private readonly AuthorService _sut;
 
     public AuthorServiceTests()
     {
         _authorRepositoryMock = new Mock<IAuthorRepository>();
-        _sut = new AuthorService(_authorRepositoryMock.Object);
+        _entityChangePublisherMock = new Mock<IEntityChangePublisher>();
+        _sut = new AuthorService(_authorRepositoryMock.Object, _entityChangePublisherMock.Object);
     }
 
     [Fact]
@@ -77,6 +82,13 @@ public class AuthorServiceTests
         result.IsActive.Should().BeTrue();
         result.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         _authorRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Author>(), It.IsAny<CancellationToken>()), Times.Once);
+        _entityChangePublisherMock.Verify(
+            x => x.PublishAsync(
+                It.Is<EntityChangeMessage>(message =>
+                    message.EntityType == CatalogEntityType.Author
+                    && message.Operation == EntityChangeOperation.Created),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -89,6 +101,9 @@ public class AuthorServiceTests
 
         result.Should().BeFalse();
         _authorRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Author>(), It.IsAny<CancellationToken>()), Times.Never);
+        _entityChangePublisherMock.Verify(
+            x => x.PublishAsync(It.IsAny<EntityChangeMessage>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -114,6 +129,13 @@ public class AuthorServiceTests
         author.FullName.Should().Be(dto.FullName);
         author.IsActive.Should().BeFalse();
         _authorRepositoryMock.Verify(x => x.UpdateAsync(author, It.IsAny<CancellationToken>()), Times.Once);
+        _entityChangePublisherMock.Verify(
+            x => x.PublishAsync(
+                It.Is<EntityChangeMessage>(message =>
+                    message.EntityType == CatalogEntityType.Author
+                    && message.Operation == EntityChangeOperation.Updated),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

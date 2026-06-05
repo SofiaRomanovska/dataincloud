@@ -1,4 +1,7 @@
 using CatalogCloud.Application.DTOs;
+using CatalogCloud.Application.Enums;
+using CatalogCloud.Application.Interfaces;
+using CatalogCloud.Application.Messaging;
 using CatalogCloud.Application.Services;
 using CatalogCloud.Domain.Entities;
 using CatalogCloud.Domain.Interfaces;
@@ -10,12 +13,14 @@ namespace CatalogCloud.Tests.Unit;
 public class ProductServiceTests
 {
     private readonly Mock<IProductRepository> _productRepositoryMock;
+    private readonly Mock<IEntityChangePublisher> _entityChangePublisherMock;
     private readonly ProductService _sut;
 
     public ProductServiceTests()
     {
         _productRepositoryMock = new Mock<IProductRepository>();
-        _sut = new ProductService(_productRepositoryMock.Object);
+        _entityChangePublisherMock = new Mock<IEntityChangePublisher>();
+        _sut = new ProductService(_productRepositoryMock.Object, _entityChangePublisherMock.Object);
     }
 
     [Fact]
@@ -91,6 +96,13 @@ public class ProductServiceTests
         result.Name.Should().Be(dto.Name);
         result.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         _productRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Product>(), It.IsAny<CancellationToken>()), Times.Once);
+        _entityChangePublisherMock.Verify(
+            x => x.PublishAsync(
+                It.Is<EntityChangeMessage>(message =>
+                    message.EntityType == CatalogEntityType.Product
+                    && message.Operation == EntityChangeOperation.Created),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -108,6 +120,9 @@ public class ProductServiceTests
         // Assert
         result.Should().BeFalse();
         _productRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Product>(), It.IsAny<CancellationToken>()), Times.Never);
+        _entityChangePublisherMock.Verify(
+            x => x.PublishAsync(It.IsAny<EntityChangeMessage>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -140,6 +155,13 @@ public class ProductServiceTests
         product.Name.Should().Be(dto.Name);
         product.QuantityInStock.Should().Be(dto.QuantityInStock);
         _productRepositoryMock.Verify(x => x.UpdateAsync(product, It.IsAny<CancellationToken>()), Times.Once);
+        _entityChangePublisherMock.Verify(
+            x => x.PublishAsync(
+                It.Is<EntityChangeMessage>(message =>
+                    message.EntityType == CatalogEntityType.Product
+                    && message.Operation == EntityChangeOperation.Updated),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

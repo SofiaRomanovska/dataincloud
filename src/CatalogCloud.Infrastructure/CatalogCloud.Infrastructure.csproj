@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\CatalogCloud.Application\CatalogCloud.Application.csproj" />
     <ProjectReference Include="..\CatalogCloud.Domain\CatalogCloud.Domain.csproj" />
   </ItemGroup>
 

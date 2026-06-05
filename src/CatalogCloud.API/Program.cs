@@ -1,10 +1,13 @@
 using CatalogCloud.Application;
 using CatalogCloud.Infrastructure;
+using CatalogCloud.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddSingleton<InMemoryEntityChangeStatisticsStore>();
+builder.Services.AddHostedService<EntityChangeStatisticsSubscriber>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

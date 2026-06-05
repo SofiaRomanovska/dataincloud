@@ -1,6 +1,8 @@
 using CatalogCloud.Domain.Interfaces;
 using CatalogCloud.Infrastructure.Data;
+using CatalogCloud.Infrastructure.Messaging;
 using CatalogCloud.Infrastructure.Repositories;
+using CatalogCloud.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +31,12 @@ public static class DependencyInjection
             var client = serviceProvider.GetRequiredService<IMongoClient>();
             return client.GetDatabase(options.DatabaseName);
         });
+
+        services.AddSingleton<InMemoryEntityChangeBroker>();
+        services.AddSingleton<IEntityChangePublisher>(serviceProvider =>
+            serviceProvider.GetRequiredService<InMemoryEntityChangeBroker>());
+        services.AddSingleton<IEntityChangeSubscriber>(serviceProvider =>
+            serviceProvider.GetRequiredService<InMemoryEntityChangeBroker>());
 
         services.AddScoped<IAuthorRepository, AuthorRepository>();
         services.AddSingleton<IProductAuthorLinkRepository, BlobProductAuthorLinkRepository>();

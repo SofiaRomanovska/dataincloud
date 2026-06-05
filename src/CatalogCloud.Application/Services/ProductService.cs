@@ -1,4 +1,6 @@
 using CatalogCloud.Application.DTOs;
+using CatalogCloud.Application.Enums;
+using CatalogCloud.Application.Messaging;
 using CatalogCloud.Application.Interfaces;
 using CatalogCloud.Domain.Entities;
 using CatalogCloud.Domain.Interfaces;
@@ -8,10 +10,12 @@ namespace CatalogCloud.Application.Services;
 public class ProductService : IProductService
 {
     private readonly IProductRepository _repository;
+    private readonly IEntityChangePublisher _entityChangePublisher;
 
-    public ProductService(IProductRepository repository)
+    public ProductService(IProductRepository repository, IEntityChangePublisher entityChangePublisher)
     {
         _repository = repository;
+        _entityChangePublisher = entityChangePublisher;
     }
 
     public async Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -48,6 +52,7 @@ public class ProductService : IProductService
         var product = new Product(dto.Name, dto.Description, dto.Price, dto.QuantityInStock);
 
         await _repository.AddAsync(product, cancellationToken);
+        await PublishChangeAsync(product.Id.ToString(), EntityChangeOperation.Created, cancellationToken);
 
         return MapToDto(product);
     }
@@ -65,6 +70,7 @@ public class ProductService : IProductService
         product.UpdateDetails(dto.Name, dto.Description, dto.Price, dto.QuantityInStock);
 
         await _repository.UpdateAsync(product, cancellationToken);
+        await PublishChangeAsync(product.Id.ToString(), EntityChangeOperation.Updated, cancellationToken);
         return true;
     }
 
@@ -94,5 +100,12 @@ public class ProductService : IProductService
             QuantityInStock = product.QuantityInStock,
             CreatedAt = product.CreatedAt
         };
+    }
+
+    private Task PublishChangeAsync(string entityId, EntityChangeOperation operation, CancellationToken cancellationToken)
+    {
+        return _entityChangePublisher.PublishAsync(
+            new EntityChangeMessage(CatalogEntityType.Product, operation, entityId, DateTime.UtcNow),
+            cancellationToken);
     }
 }

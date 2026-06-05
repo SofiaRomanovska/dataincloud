@@ -1,5 +1,7 @@
 using CatalogCloud.Application.DTOs;
+using CatalogCloud.Application.Enums;
 using CatalogCloud.Application.Interfaces;
+using CatalogCloud.Application.Messaging;
 using CatalogCloud.Domain.Entities;
 using CatalogCloud.Domain.Interfaces;
 
@@ -10,15 +12,18 @@ public class ProductAuthorLinkService : IProductAuthorLinkService
     private readonly IProductRepository _productRepository;
     private readonly IAuthorRepository _authorRepository;
     private readonly IProductAuthorLinkRepository _linkRepository;
+    private readonly IEntityChangePublisher _entityChangePublisher;
 
     public ProductAuthorLinkService(
         IProductRepository productRepository,
         IAuthorRepository authorRepository,
-        IProductAuthorLinkRepository linkRepository)
+        IProductAuthorLinkRepository linkRepository,
+        IEntityChangePublisher entityChangePublisher)
     {
         _productRepository = productRepository;
         _authorRepository = authorRepository;
         _linkRepository = linkRepository;
+        _entityChangePublisher = entityChangePublisher;
     }
 
     public async Task<ProductAuthorLinkResult> CreateAsync(CreateProductAuthorLinkDto dto, CancellationToken cancellationToken = default)
@@ -42,6 +47,7 @@ public class ProductAuthorLinkService : IProductAuthorLinkService
         var link = new ProductAuthorLink(dto.ProductId, dto.AuthorId);
 
         await _linkRepository.UpsertAsync(link, cancellationToken);
+        await PublishChangeAsync(link.ProductId, EntityChangeOperation.Created, cancellationToken);
         return ProductAuthorLinkResult.Success(MapToDto(link));
     }
 
@@ -72,6 +78,7 @@ public class ProductAuthorLinkService : IProductAuthorLinkService
         existingLink.ChangeAuthor(dto.AuthorId);
 
         await _linkRepository.UpsertAsync(existingLink, cancellationToken);
+        await PublishChangeAsync(existingLink.ProductId, EntityChangeOperation.Updated, cancellationToken);
         return ProductAuthorLinkResult.Success(MapToDto(existingLink));
     }
 
@@ -120,5 +127,12 @@ public class ProductAuthorLinkService : IProductAuthorLinkService
             AuthorId = link.AuthorId,
             CachedAt = link.CachedAt
         };
+    }
+
+    private Task PublishChangeAsync(Guid productId, EntityChangeOperation operation, CancellationToken cancellationToken)
+    {
+        return _entityChangePublisher.PublishAsync(
+            new EntityChangeMessage(CatalogEntityType.ProductAuthorLink, operation, productId.ToString(), DateTime.UtcNow),
+            cancellationToken);
     }
 }

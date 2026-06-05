@@ -1,5 +1,7 @@
 using CatalogCloud.Application.DTOs;
+using CatalogCloud.Application.Enums;
 using CatalogCloud.Application.Interfaces;
+using CatalogCloud.Application.Messaging;
 using CatalogCloud.Domain.Entities;
 using CatalogCloud.Domain.Interfaces;
 
@@ -8,10 +10,12 @@ namespace CatalogCloud.Application.Services;
 public class AuthorService : IAuthorService
 {
     private readonly IAuthorRepository _repository;
+    private readonly IEntityChangePublisher _entityChangePublisher;
 
-    public AuthorService(IAuthorRepository repository)
+    public AuthorService(IAuthorRepository repository, IEntityChangePublisher entityChangePublisher)
     {
         _repository = repository;
+        _entityChangePublisher = entityChangePublisher;
     }
 
     public async Task<AuthorDto?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
@@ -43,6 +47,7 @@ public class AuthorService : IAuthorService
             dto.IsActive!.Value);
 
         await _repository.AddAsync(author, cancellationToken);
+        await PublishChangeAsync(author.Id, EntityChangeOperation.Created, cancellationToken);
 
         return MapToDto(author);
     }
@@ -65,6 +70,7 @@ public class AuthorService : IAuthorService
             dto.IsActive!.Value);
 
         await _repository.UpdateAsync(author, cancellationToken);
+        await PublishChangeAsync(author.Id, EntityChangeOperation.Updated, cancellationToken);
         return true;
     }
 
@@ -94,5 +100,12 @@ public class AuthorService : IAuthorService
             IsActive = author.IsActive,
             CreatedAt = author.CreatedAt
         };
+    }
+
+    private Task PublishChangeAsync(string entityId, EntityChangeOperation operation, CancellationToken cancellationToken)
+    {
+        return _entityChangePublisher.PublishAsync(
+            new EntityChangeMessage(CatalogEntityType.Author, operation, entityId, DateTime.UtcNow),
+            cancellationToken);
     }
 }
